@@ -1,0 +1,15 @@
+{
+	"name": "adf-samragi-datamigration",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "spaincentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "e33c0bb0-3d2b-46aa-8b9a-7275e7fb309f",
+		"tenantId": "be4655df-ac73-401f-a7ae-198c3b72d0c6"
+	}
+}
