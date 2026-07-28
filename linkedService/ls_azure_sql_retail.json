@@ -1,0 +1,23 @@
+{
+	"name": "ls_azure_sql_retail",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "sql-retail-mig-prd.database.windows.net",
+			"database": "RetailSalesDB",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "SQL",
+			"userName": "retailDBadmin",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_keyvault_retail",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sql-retail-password"
+			}
+		}
+	}
+}
