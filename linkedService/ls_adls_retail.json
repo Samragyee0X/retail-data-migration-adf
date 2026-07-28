@@ -1,0 +1,18 @@
+{
+	"name": "ls_adls_retail",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://stretaildatalake.dfs.core.windows.net/",
+			"accountKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_keyvault_retail",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "adls-retail-datalake-key"
+			}
+		}
+	}
+}
