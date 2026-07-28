@@ -1,0 +1,10 @@
+{
+	"name": "ls_keyvault_retail",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kv-retail-datamig.vault.azure.net/"
+		}
+	}
+}
