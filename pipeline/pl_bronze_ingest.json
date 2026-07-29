@@ -27,6 +27,26 @@
 					},
 					"firstRowOnly": false
 				}
+			},
+			{
+				"name": "foreach_Table",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lkp_GetActiveTables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lkp_GetActiveTables').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true
+				}
 			}
 		],
 		"annotations": []
