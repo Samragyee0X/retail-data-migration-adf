@@ -50,7 +50,14 @@
 						{
 							"name": "if_LoadType",
 							"type": "IfCondition",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "set_DebugLoadType",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"userProperties": [],
 							"typeProperties": {
 								"expression": {
@@ -126,11 +133,33 @@
 									}
 								]
 							}
+						},
+						{
+							"name": "set_DebugLoadType",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "debugLoadType",
+								"value": {
+									"value": "@item().LoadType",
+									"type": "Expression"
+								}
+							}
 						}
 					]
 				}
 			}
 		],
+		"variables": {
+			"debugLoadType": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }
