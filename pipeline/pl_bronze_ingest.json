@@ -50,14 +50,7 @@
 						{
 							"name": "if_LoadType",
 							"type": "IfCondition",
-							"dependsOn": [
-								{
-									"activity": "set_DebugLoadType",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"userProperties": [],
 							"typeProperties": {
 								"expression": {
@@ -131,35 +124,83 @@
 											}
 										]
 									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "cpy_IncrementalLoad",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"sqlReaderQuery": "@concat('SELECT * FROM ', item().SourceSchema, '.', item().SourceTable, ' WHERE ', item().WatermarkColumn, ' > ''', item().LastWatermarkValue, '''')",
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "ds_sql_generic",
+												"type": "DatasetReference",
+												"parameters": {
+													"SchemaName": {
+														"value": "@item().SourceSchema",
+														"type": "Expression"
+													},
+													"TableName": "@item().SourceTable"
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "ds_adls_bronze_fact",
+												"type": "DatasetReference",
+												"parameters": {
+													"FolderName": {
+														"value": "@item().SinkFolder",
+														"type": "Expression"
+													},
+													"PartitionDate": {
+														"value": "@formatDateTime(utcNow(),'yyyyMMdd')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
 								]
-							}
-						},
-						{
-							"name": "set_DebugLoadType",
-							"type": "SetVariable",
-							"dependsOn": [],
-							"policy": {
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "debugLoadType",
-								"value": {
-									"value": "@item().LoadType",
-									"type": "Expression"
-								}
 							}
 						}
 					]
 				}
 			}
 		],
-		"variables": {
-			"debugLoadType": {
-				"type": "String"
-			}
-		},
 		"annotations": []
 	}
 }
