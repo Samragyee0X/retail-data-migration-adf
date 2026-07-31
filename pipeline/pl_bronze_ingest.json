@@ -193,6 +193,85 @@
 												}
 											}
 										]
+									},
+									{
+										"name": "lkp_GetMaxWaterMark",
+										"type": "Lookup",
+										"dependsOn": [
+											{
+												"activity": "cpy_IncrementalLoad",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"sqlReaderQuery": "@concat('SELECT MAX(', item().WatermarkColumn, ') AS NewWatermark FROM ', item().SourceSchema, '.', item().SourceTable)",
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"dataset": {
+												"referenceName": "ds_sql_generic",
+												"type": "DatasetReference",
+												"parameters": {
+													"SchemaName": {
+														"value": "@item().SourceSchema",
+														"type": "Expression"
+													},
+													"TableName": "@item().SourceTable"
+												}
+											}
+										}
+									},
+									{
+										"name": "sp_UpdateWaterMark",
+										"type": "SqlServerStoredProcedure",
+										"dependsOn": [
+											{
+												"activity": "lkp_GetMaxWaterMark",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"storedProcedureName": "[dbo].[usp_UpdateWatermark]",
+											"storedProcedureParameters": {
+												"NewWatermarkValue": {
+													"value": "@activity('lkp_GetMaxWatermark').output.firstRow.NewWatermark",
+													"type": "DateTime"
+												},
+												"TableName": {
+													"value": {
+														"value": "@item().SourceTable",
+														"type": "Expression"
+													},
+													"type": "String"
+												}
+											}
+										},
+										"linkedServiceName": {
+											"referenceName": "ls_azure_sql_retail",
+											"type": "LinkedServiceReference"
+										}
 									}
 								]
 							}
