@@ -1,0 +1,31 @@
+{
+	"name": "ds_adls_bronze_generic",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_retail",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FolderName": {
+				"type": "string"
+			},
+			"PartitionDate": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@{dataset().FolderName}/day=@{dataset().PartitionDate}",
+					"type": "Expression"
+				},
+				"fileSystem": "bronze"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
