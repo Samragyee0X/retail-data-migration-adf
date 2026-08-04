@@ -74,7 +74,7 @@
 								"source": {
 									"type": "AzureSqlSource",
 									"sqlReaderQuery": {
-										"value": "@concat('SELECT * FROM ', item().SourceSchema, '.', item().SourceTable, ' WHERE ', item().WatermarkColumn, ' > ''', item().LastWatermarkValue, '''')",
+										"value": "@concat('SELECT * FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable, ' WHERE ', pipeline().parameters.WatermarkColumn, ' > ''', pipeline().parameters.LastWatermarkValue, '''')",
 										"type": "Expression"
 									},
 									"queryTimeout": "02:00:00",
@@ -106,10 +106,13 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"SchemaName": {
-											"value": "@item().SourceSchema",
+											"value": "@pipeline().parameters.SourceSchema",
 											"type": "Expression"
 										},
-										"TableName": "@item().SourceTable"
+										"TableName": {
+											"value": "@pipeline().parameters.SourceTable",
+											"type": "Expression"
+										}
 									}
 								}
 							],
@@ -119,7 +122,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"FolderName": {
-											"value": "@item().SinkFolder",
+											"value": "@pipeline().parameters.SinkFolder",
 											"type": "Expression"
 										},
 										"PartitionDate": {
@@ -153,7 +156,7 @@
 								"source": {
 									"type": "AzureSqlSource",
 									"sqlReaderQuery": {
-										"value": "@concat('SELECT MAX(', item().WatermarkColumn, ') AS NewWatermark FROM ', item().SourceSchema, '.', item().SourceTable)",
+										"value": "@concat('SELECT MAX(', pipeline().parameters.WatermarkColumn, ') AS NewWatermark FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable)",
 										"type": "Expression"
 									},
 									"queryTimeout": "02:00:00",
@@ -164,10 +167,13 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"SchemaName": {
-											"value": "@item().SourceSchema",
+											"value": "@pipeline().parameters.SourceSchema",
 											"type": "Expression"
 										},
-										"TableName": "@item().SourceTable"
+										"TableName": {
+											"value": "@pipeline().parameters.SourceTable",
+											"type": "Expression"
+										}
 									}
 								}
 							}
@@ -196,14 +202,14 @@
 								"storedProcedureParameters": {
 									"NewWatermarkValue": {
 										"value": {
-											"value": "@activity('lkp_GetMaxWatermark').output.firstRow.NewWatermark",
+											"value": "@{activity('lkp_GetMaxWaterMark').output.firstRow.NewWatermark}",
 											"type": "Expression"
 										},
 										"type": "DateTime"
 									},
 									"TableName": {
 										"value": {
-											"value": "@item().SourceTable",
+											"value": "@pipeline().parameters.SourceTable",
 											"type": "Expression"
 										},
 										"type": "String"
@@ -230,6 +236,9 @@
 				"type": "string"
 			},
 			"LastWatermarkValue": {
+				"type": "string"
+			},
+			"SinkFolder": {
 				"type": "string"
 			}
 		},
