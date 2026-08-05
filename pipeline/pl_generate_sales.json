@@ -1,0 +1,28 @@
+{
+	"name": "pl_generate_sales",
+	"properties": {
+		"activities": [
+			{
+				"name": "sp_GenerateDailySales",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_insert_daily_sales]"
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_azure_sql_retail",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
