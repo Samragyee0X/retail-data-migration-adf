@@ -18,7 +18,7 @@
 					"source": {
 						"type": "AzureSqlSource",
 						"sqlReaderQuery": {
-							"value": "@concat('SELECT COUNT(*) AS cnt FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable, ' WHERE ', pipeline().parameters.WatermarkColumn, ' > ''', pipeline().parameters.LastWatermarkValue, '''')",
+							"value": "@concat('SELECT COUNT(*) AS cnt, MAX(', pipeline().parameters.WatermarkColumn, ') AS NewWatermark FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable, ' WHERE ', pipeline().parameters.WatermarkColumn, ' > ''', pipeline().parameters.LastWatermarkValue, '''')",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00",
@@ -134,56 +134,11 @@
 							]
 						},
 						{
-							"name": "lkp_GetMaxWaterMark",
-							"type": "Lookup",
-							"dependsOn": [
-								{
-									"activity": "cpy_IncrementalLoad",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "AzureSqlSource",
-									"sqlReaderQuery": {
-										"value": "@concat('SELECT MAX(', pipeline().parameters.WatermarkColumn, ') AS NewWatermark FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable, ' WHERE ', pipeline().parameters.WatermarkColumn, ' > ''', pipeline().parameters.LastWatermarkValue, '''')",
-										"type": "Expression"
-									},
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
-								"dataset": {
-									"referenceName": "ds_sql_generic",
-									"type": "DatasetReference",
-									"parameters": {
-										"SchemaName": {
-											"value": "@pipeline().parameters.SourceSchema",
-											"type": "Expression"
-										},
-										"TableName": {
-											"value": "@pipeline().parameters.SourceTable",
-											"type": "Expression"
-										}
-									}
-								}
-							}
-						},
-						{
 							"name": "sp_UpdateWaterMark",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [
 								{
-									"activity": "lkp_GetMaxWaterMark",
+									"activity": "cpy_IncrementalLoad",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -202,7 +157,7 @@
 								"storedProcedureParameters": {
 									"NewWatermarkValue": {
 										"value": {
-											"value": "@{activity('lkp_GetMaxWaterMark').output.firstRow.NewWatermark}",
+											"value": "@{activity('lkp_GetRowCount').output.firstRow.NewWatermark}",
 											"type": "Expression"
 										},
 										"type": "DateTime"
