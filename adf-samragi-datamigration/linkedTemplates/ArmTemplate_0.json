@@ -97,6 +97,42 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_generate_sales')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "sp_GenerateDailySales",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_insert_daily_sales]"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql_retail",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_retail')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_adls_bronze_dim')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -290,7 +326,7 @@
 							"source": {
 								"type": "AzureSqlSource",
 								"sqlReaderQuery": {
-									"value": "@concat('SELECT COUNT(*) AS cnt FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable, ' WHERE ', pipeline().parameters.WatermarkColumn, ' > ''', pipeline().parameters.LastWatermarkValue, '''')",
+									"value": "@concat('SELECT COUNT(*) AS cnt, MAX(', pipeline().parameters.WatermarkColumn, ') AS NewWatermark FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable, ' WHERE ', pipeline().parameters.WatermarkColumn, ' > ''', pipeline().parameters.LastWatermarkValue, '''')",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00",
@@ -406,56 +442,11 @@
 									]
 								},
 								{
-									"name": "lkp_GetMaxWaterMark",
-									"type": "Lookup",
-									"dependsOn": [
-										{
-											"activity": "cpy_IncrementalLoad",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderQuery": {
-												"value": "@concat('SELECT MAX(', pipeline().parameters.WatermarkColumn, ') AS NewWatermark FROM ', pipeline().parameters.SourceSchema, '.', pipeline().parameters.SourceTable)",
-												"type": "Expression"
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"dataset": {
-											"referenceName": "ds_sql_generic",
-											"type": "DatasetReference",
-											"parameters": {
-												"SchemaName": {
-													"value": "@pipeline().parameters.SourceSchema",
-													"type": "Expression"
-												},
-												"TableName": {
-													"value": "@pipeline().parameters.SourceTable",
-													"type": "Expression"
-												}
-											}
-										}
-									}
-								},
-								{
 									"name": "sp_UpdateWaterMark",
 									"type": "SqlServerStoredProcedure",
 									"dependsOn": [
 										{
-											"activity": "lkp_GetMaxWaterMark",
+											"activity": "cpy_IncrementalLoad",
 											"dependencyConditions": [
 												"Succeeded"
 											]
@@ -474,7 +465,7 @@
 										"storedProcedureParameters": {
 											"NewWatermarkValue": {
 												"value": {
-													"value": "@{activity('lkp_GetMaxWaterMark').output.firstRow.NewWatermark}",
+													"value": "@{activity('lkp_GetRowCount').output.firstRow.NewWatermark}",
 													"type": "Expression"
 												},
 												"type": "DateTime"
@@ -523,6 +514,36 @@
 				"[concat(variables('factoryId'), '/datasets/ds_sql_generic')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_bronze_fact')]",
 				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_retail')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tr_generate_daily_sales')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_generate_sales",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2026-08-05T23:30:00",
+						"timeZone": "Nepal Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_generate_sales')]"
 			]
 		},
 		{
@@ -711,6 +732,36 @@
 				"[concat(variables('factoryId'), '/datasets/ds_sql_generic')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_bronze_dim')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_incremental_load')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tr_bronze_ingest')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_bronze_ingest",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2026-08-06T00:00:00",
+						"timeZone": "Nepal Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_bronze_ingest')]"
 			]
 		}
 	]
