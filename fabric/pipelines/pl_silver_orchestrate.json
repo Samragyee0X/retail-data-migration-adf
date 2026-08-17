@@ -1,0 +1,99 @@
+{
+    "name": "pl_silver_orchestrate",
+    "objectId": "a3a3fe06-f3b8-4a4d-8ef6-2966794b235a",
+    "properties": {
+        "activities": [
+            {
+                "name": "Run_Silver_Dimensions",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Invoke_Bronze_Ingest",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "df3376d0-cf14-4605-a47c-6051cf1a2ecf",
+                    "workspaceId": "eeacc14c-747c-48ae-ba46-b0c2ad355cd0"
+                }
+            },
+            {
+                "name": "Run_Silver_Fact",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Run_Silver_Dimensions",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "fe3e5c4b-2436-496f-968e-6d6678ccee3a",
+                    "workspaceId": "eeacc14c-747c-48ae-ba46-b0c2ad355cd0"
+                }
+            },
+            {
+                "name": "Invoke_Bronze_Ingest",
+                "type": "InvokePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "waitOnCompletion": true,
+                    "operationType": "InvokeADFPipeline",
+                    "pipelineName": "pl_bronze_ingest"
+                },
+                "externalReferences": {
+                    "connection": "c0c16528-60cc-49a7-95b5-e9c41e1b3562"
+                }
+            },
+            {
+                "name": "Run_Gold",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Run_Silver_Fact",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "050d3e1c-7f9f-4a54-85c1-a12b17bec8dc",
+                    "workspaceId": "eeacc14c-747c-48ae-ba46-b0c2ad355cd0"
+                }
+            }
+        ],
+        "lastModifiedByObjectId": "98f40e10-08b9-435d-8b3b-ea7c599e400d",
+        "lastPublishTime": "2026-08-11T06:32:48Z"
+    }
+}
