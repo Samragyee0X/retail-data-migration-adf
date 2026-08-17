@@ -1,0 +1,9 @@
+CREATE OR ALTER PROCEDURE dbo.usp_UpdateWatermark
+    @TableName VARCHAR(50),
+    @NewWatermarkValue DATETIME2
+AS
+BEGIN
+    UPDATE dbo.PipelineConfig
+    SET LastWatermarkValue = @NewWatermarkValue
+    WHERE SourceTable = @TableName;
+END

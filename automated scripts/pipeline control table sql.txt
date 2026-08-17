@@ -1,0 +1,21 @@
+CREATE TABLE dbo.PipelineConfig (
+    ConfigId            INT           IDENTITY PRIMARY KEY,
+    SourceSchema        VARCHAR(50)   NOT NULL,
+    SourceTable         VARCHAR(100)  NOT NULL,
+    SinkFolder          VARCHAR(100)  NOT NULL,
+    WatermarkColumn     VARCHAR(100)  NULL,
+    LastWatermarkValue  DATETIME      NULL,       -- ← THE CRITICAL ONE
+    LoadType            VARCHAR(20)   NOT NULL
+                        CHECK (LoadType IN ('Full', 'Incremental')),
+    IsActive            BIT           NOT NULL DEFAULT 1,
+    LastRunStatus       VARCHAR(20)   NULL,       -- 'Success' / 'Failed' / 'Running'
+    LastRunDatetime     DATETIME      NULL        -- when pipeline last executed
+);
+
+INSERT INTO dbo.PipelineConfig 
+    (SourceSchema, SourceTable, SinkFolder, WatermarkColumn, LastWatermarkValue, LoadType)
+VALUES
+    ('dbo', 'Product',  'product',  NULL,       NULL,                   'Full'),
+    ('dbo', 'Store',    'store',    NULL,       NULL,                   'Full'),
+    ('dbo', 'Customer', 'customer', NULL,       NULL,                   'Full'),
+    ('dbo', 'f_sls_t',  'f_sls_t',  'trxn_dt', '2000-01-01 00:00:00', 'Incremental');
